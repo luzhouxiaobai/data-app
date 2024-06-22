@@ -41,22 +41,16 @@ public class RbmUdfExample {
                     "GROUP BY bucket"
         );
 
-//        tableEnv.createTemporaryView("add", resultTable);
-//
-//        Table table = tableEnv.sqlQuery("select rbm_cardinality(uv) as res from add");
-//
-//        Table rbmResultStage1 = resultTable
-//                .groupBy($("bucket"))
-//                .select($("bucket"), call("rbm_cardinality", $("uv")).as("uv_data"));
-//
-//        Table rbmResult = rbmResultStage1.select($("uv_data").sum().as("result"));
-
-//         将结果转换为DataStream并打印
-//        tableEnv.toAppendStream(resultTable, Row.class).print();
-
         tableEnv.toRetractStream(resultTable, Row.class).print();
 
-//        tableEnv.toDataStream(table, Row.class).print();
+        // 解析rbm串
+        Table rbmResultStage1 = resultTable
+                .groupBy($("bucket"))
+                .select($("bucket"),
+                        call("rbm_cardinality", $("uv")).as("uv_data"));
+        Table rbmResult = rbmResultStage1.select($("uv_data").sum().as("result"));
+
+        tableEnv.toRetractStream(rbmResult, Row.class).print();
 
         // 执行作业
         env.execute("Flink UDF Example");
